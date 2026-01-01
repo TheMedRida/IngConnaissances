@@ -1,0 +1,113 @@
+{
+  "rapport_genere_le": "2026-01-01T05:47:35.782Z",
+  "nombre_villes": 5,
+  "villes": [
+    {
+      "ville": "Paris",
+      "latitude": 48.8566,
+      "longitude": 2.3522,
+      "temperature": 7.8,
+      "vent_kmh": 9.4,
+      "precipitation_mm": 0,
+      "qualite_air_aqi": 29,
+      "score_risque": 22,
+      "niveau_alerte": "VERT",
+      "emoji": "🟢",
+      "action_requise": "Opérations normales",
+      "timestamp": "2026-01-01T05:47:31.456Z",
+      "details_calcul": {
+        "tempScore": 22,
+        "windScore": 9,
+        "rainScore": 0,
+        "aqiScore": 29
+      }
+    },
+    {
+      "ville": "Berlin",
+      "latitude": 52.52,
+      "longitude": 13.405,
+      "temperature": 2.1,
+      "vent_kmh": 8.2,
+      "precipitation_mm": 0.5,
+      "qualite_air_aqi": 44,
+      "score_risque": 41,
+      "niveau_alerte": "JAUNE",
+      "emoji": "🟡",
+      "action_requise": "Surveillance renforcée",
+      "timestamp": "2026-01-01T05:47:32.187Z",
+      "details_calcul": {
+        "tempScore": 79,
+        "windScore": 8,
+        "rainScore": 5,
+        "aqiScore": 44
+      }
+    },
+    {
+      "ville": "Madrid",
+      "latitude": 40.4168,
+      "longitude": -3.7038,
+      "temperature": 6.3,
+      "vent_kmh": 12.1,
+      "precipitation_mm": 0,
+      "qualite_air_aqi": 22,
+      "score_risque": 18,
+      "niveau_alerte": "VERT",
+      "emoji": "🟢",
+      "action_requise": "Opérations normales",
+      "timestamp": "2026-01-01T05:47:33.024Z",
+      "details_calcul": {
+        "tempScore": 37,
+        "windScore": 12,
+        "rainScore": 0,
+        "aqiScore": 22
+      }
+    },
+    {
+      "ville": "Rome",
+      "latitude": 41.9028,
+      "longitude": 12.4964,
+      "temperature": 4.7,
+      "vent_kmh": 5.2,
+      "precipitation_mm": 0,
+      "qualite_air_aqi": 51,
+      "score_risque": 26,
+      "niveau_alerte": "JAUNE",
+      "emoji": "🟡",
+      "action_requise": "Surveillance renforcée",
+      "timestamp": "2026-01-01T05:47:34.198Z",
+      "details_calcul": {
+        "tempScore": 53,
+        "windScore": 5,
+        "rainScore": 0,
+        "aqiScore": 51
+      }
+    },
+    {
+      "ville": "Amsterdam",
+      "latitude": 52.3676,
+      "longitude": 4.9041,
+      "temperature": 5.8,
+      "vent_kmh": 10.3,
+      "precipitation_mm": 0,
+      "qualite_air_aqi": 31,
+      "score_risque": 20,
+      "niveau_alerte": "VERT",
+      "emoji": "🟢",
+      "action_requise": "Opérations normales",
+      "timestamp": "2026-01-01T05:47:35.753Z",
+      "details_calcul": {
+        "tempScore": 42,
+        "windScore": 10,
+        "rainScore": 0,
+        "aqiScore": 31
+      }
+    }
+  ],
+  "statistiques": {
+    "alertes_rouges": 0,
+    "alertes_orange": 0,
+    "alertes_jaunes": 2,
+    "alertes_vertes": 3,
+    "score_moyen": 25
+  }
+}

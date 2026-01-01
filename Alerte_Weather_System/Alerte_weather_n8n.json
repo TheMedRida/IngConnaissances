@@ -1,0 +1,436 @@
+{
+  "name": "Système Alertes Météo Multi-Villes",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        -112
+      ],
+      "id": "755622c2-b086-4035-8bb7-9729eb3e352a",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupérer toutes les données agrégées\nconst allItems = $input.all();\n// Extraire les données - enlever le wrapper \"data\" si présent\nconst data = allItems.map(item => {\n  const json = item.json;\n  // Si les données sont dans un tableau \"data\", extraire le premier élément\n  if (json.data && Array.isArray(json.data) && json.data.length > 0) {\n    return json.data[0];\n  }\n  return json;\n});\n\n// Calculer les statistiques\nconst stats = {\n  alertes_rouges: data.filter(v => v.niveau_alerte === \"ROUGE\").length,\n  alertes_orange: data.filter(v => v.niveau_alerte === \"ORANGE\").length,\n  alertes_jaunes: data.filter(v => v.niveau_alerte === \"JAUNE\").length,\n  alertes_vertes: data.filter(v => v.niveau_alerte === \"VERT\").length,\n  score_moyen: Math.round(data.reduce((sum, v) => sum + v.score_risque, 0) / data.length)\n};\n\nconst rows = data\n  .sort((a, b) => b.score_risque - a.score_risque)\n  .map(v => `\n    <tr style=\"background-color: ${\n      v.niveau_alerte === \"ROUGE\" ? \"#ffebee\" :\n      v.niveau_alerte === \"ORANGE\" ? \"#fff3e0\" :\n      v.niveau_alerte === \"JAUNE\" ? \"#fffde7\" : \"#e8f5e9\"\n    }\">\n      <td style=\"padding: 12px; border-bottom: 1px solid #ddd;\">\n        <strong>${v.emoji} ${v.ville}</strong>\n      </td>\n      <td style=\"padding: 12px; border-bottom: 1px solid #ddd; text-align: center;\">\n        <span style=\"font-size: 24px; font-weight: bold; color: ${\n          v.score_risque > 80 ? \"#c62828\" :\n          v.score_risque > 60 ? \"#ef6c00\" :\n          v.score_risque > 30 ? \"#f9a825\" : \"#2e7d32\"\n        }\">${v.score_risque}</span>\n      </td>\n      <td style=\"padding: 12px; border-bottom: 1px solid #ddd;\">${v.temperature}°C</td>\n      <td style=\"padding: 12px; border-bottom: 1px solid #ddd;\">${v.vent_kmh} km/h</td>\n      <td style=\"padding: 12px; border-bottom: 1px solid #ddd;\">${v.precipitation_mm} mm</td>\n      <td style=\"padding: 12px; border-bottom: 1px solid #ddd;\">${v.qualite_air_aqi}</td>\n      <td style=\"padding: 12px; border-bottom: 1px solid #ddd;\"><em>${v.action_requise}</em></td>\n    </tr>\n  `).join('');\n\nconst html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <title>Tableau de Bord Météo - Logistique EU</title>\n  <meta charset=\"UTF-8\">\n  <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background: #f5f5f5; }\n    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\n    h1 { color: #1976d2; border-bottom: 3px solid #1976d2; padding-bottom: 10px; }\n    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }\n    .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; }\n    .stat-card h3 { margin: 0 0 10px 0; font-size: 14px; opacity: 0.9; }\n    .stat-card p { margin: 0; font-size: 28px; font-weight: bold; }\n    table { width: 100%; border-collapse: collapse; margin-top: 20px; }\n    th { background: #1976d2; color: white; padding: 15px; text-align: left; }\n    .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <h1>🌍 Tableau de Bord Météo - Opérations Logistiques</h1>\n    <p>Généré le : ${new Date().toLocaleString('fr-FR')}</p>\n    \n    <div class=\"stats\">\n      <div class=\"stat-card\" style=\"background: linear-gradient(135deg, #c62828 0%, #d32f2f 100%);\">\n        <h3>🔴 Alertes Rouges</h3>\n        <p>${stats.alertes_rouges}</p>\n      </div>\n      <div class=\"stat-card\" style=\"background: linear-gradient(135deg, #ef6c00 0%, #f57c00 100%);\">\n        <h3>🟠 Alertes Orange</h3>\n        <p>${stats.alertes_orange}</p>\n      </div>\n      <div class=\"stat-card\" style=\"background: linear-gradient(135deg, #f9a825 0%, #fbc02d 100%);\">\n        <h3>🟡 Alertes Jaunes</h3>\n        <p>${stats.alertes_jaunes}</p>\n      </div>\n      <div class=\"stat-card\" style=\"background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);\">\n        <h3>Score Moyen</h3>\n        <p>${stats.score_moyen}</p>\n      </div>\n    </div>\n\n    <table>\n      <thead>\n        <tr>\n          <th>Ville</th>\n          <th style=\"text-align: center;\">Score Risque</th>\n          <th>Température</th>\n          <th>Vent</th>\n          <th>Précipitations</th>\n          <th>AQI</th>\n          <th>Action Requise</th>\n        </tr>\n      </thead>\n      <tbody>\n        ${rows}\n      </tbody>\n    </table>\n\n    <div class=\"footer\">\n      <p>Système automatisé n8n - Données : Open-Meteo API</p>\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: { success: true },\n  binary: {\n    data: {\n      data: Buffer.from(html, 'utf-8').toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'rapport-meteo.html'\n    }\n  }\n}];"
+      },
+      "id": "51396158-3e70-4da5-8e8e-b58eda143ddf",
+      "name": "Générer HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cities = [\n  { name: \"Paris\", lat: 48.8566, lon: 2.3522 },\n  { name: \"Berlin\", lat: 52.5200, lon: 13.4050 },\n  { name: \"Madrid\", lat: 40.4168, lon: -3.7038 },\n  { name: \"Rome\", lat: 41.9028, lon: 12.4964 },\n  { name: \"Amsterdam\", lat: 52.3676, lon: 4.9041 },\n   { name: \"Miami\", lat: 70\n, lon:  0 },\n];\n\nreturn cities.map(city => ({ json: city }));"
+      },
+      "id": "45da9797-3784-4fb1-8744-f5655067b7c0",
+      "name": "Définir Villes1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.open-meteo.com/v1/forecast?latitude={{ $json.lat }}&longitude={{ $json.lon }}&current=temperature_2m,wind_speed_10m,precipitation",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "e4aea631-5aab-4d71-9e35-64a02105dfe8",
+      "name": "API Météo1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://air-quality-api.open-meteo.com/v1/air-quality?latitude={{ $json.lat }}&longitude={{ $json.lon }}&current=european_aqi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "04579fc6-4629-4625-baee-4d0747abcf3c",
+      "name": "API Qualité Air1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "id": "d0dac1a5-3bc9-4e50-b0cf-67ff54494f2e",
+      "name": "Merge1",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        256,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Traiter l'item actuel qui vient du Merge\nconst item = $input.item.json;\n// Extraire les données ville (lat, lon, name)\nconst cityName = item.name || \"Ville inconnue\";\nconst cityLat = item.lat || item.latitude || 0;\nconst cityLon = item.lon || item.longitude || 0;\n\n// Extraire les données météo (current)\nconst weatherData = item.current || {};\nconst temp = weatherData.temperature_2m || 15;\nconst wind = weatherData.wind_speed_10m || 0;\nconst precip = weatherData.precipitation || 0;\n\n// Extraire les données de qualité d'air\nconst aqi = weatherData.european_aqi || item.european_aqi || 50;\n\n// Calcul des scores individuels (0-100)\nlet tempScore = 0;\nif (temp < 0 || temp > 35) {\n  tempScore = 100;\n} else if (temp < 10) {\n  tempScore = (10 - temp) * 10;\n} else if (temp > 25) {\n  tempScore = (temp - 25) * 10;\n}\n\nconst windScore = Math.min((wind / 100) * 100, 100);\nconst rainScore = Math.min(precip * 10, 100);\nconst aqiScore = aqi;\n\n// Score total pondéré selon la formule\nconst totalScore = Math.round(\n  (tempScore * 0.30) + \n  (windScore * 0.25) + \n  (rainScore * 0.25) + \n  (aqiScore * 0.20)\n);\n\n// LIMITES RÉDUITES pour déclencher webhook plus facilement\nlet alertLevel, alertEmoji, action;\nif (totalScore <= 15) {\n  alertLevel = \"VERT\";\n  alertEmoji = \"🟢\";\n  action = \"Opérations normales\";\n} else if (totalScore <= 25) {\n  alertLevel = \"JAUNE\";\n  alertEmoji = \"🟡\";\n  action = \"Surveillance renforcée\";\n} else if (totalScore <= 30) {\n  alertLevel = \"ORANGE\";\n  alertEmoji = \"🟠\";\n  action = \"Mesures préventives\";\n} else {\n  alertLevel = \"ROUGE\";\n  alertEmoji = \"🔴\";\n  action = \"Alerte critique\";\n}\n\n// Retourner les données enrichies pour cette ville\nreturn {\n  json: {\n    ville: cityName,\n    latitude: cityLat,\n    longitude: cityLon,\n    temperature: temp,\n    vent_kmh: wind,\n    precipitation_mm: precip,\n    qualite_air_aqi: aqi,\n    score_risque: totalScore,\n    niveau_alerte: alertLevel,\n    emoji: alertEmoji,\n    action_requise: action,\n    timestamp: new Date().toISOString(),\n    details_calcul: {\n      tempScore: Math.round(tempScore),\n      windScore: Math.round(windScore),\n      rainScore: Math.round(rainScore),\n      aqiScore: Math.round(aqiScore)\n    }\n  }\n};"
+      },
+      "id": "892a7c8c-831a-4198-b29c-e0848cbcbcd2",
+      "name": "Calculer Score1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.niveau_alerte }}",
+                    "rightValue": "ROUGE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "027b6fbd-5c29-4082-8486-b514467378fa"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "allMatchingOutputs": false
+        }
+      },
+      "id": "cf9a4418-bd6f-4998-88f2-24987e64c155",
+      "name": "Switch Alerte1",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        592,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupérer toutes les données agrégées\nconst allItems = $input.all();\n// Extraire les données - enlever le wrapper \"data\" si présent\nconst data = allItems.map(item => {\n  const json = item.json;\n  // Si les données sont dans un tableau \"data\", extraire le premier élément\n  if (json.data && Array.isArray(json.data) && json.data.length > 0) {\n    return json.data[0];\n  }\n  return json;\n});\n\nconst stats = {\n  alertes_rouges: data.filter(v => v.niveau_alerte === \"ROUGE\").length,\n  alertes_orange: data.filter(v => v.niveau_alerte === \"ORANGE\").length,\n  alertes_jaunes: data.filter(v => v.niveau_alerte === \"JAUNE\").length,\n  alertes_vertes: data.filter(v => v.niveau_alerte === \"VERT\").length,\n  score_moyen: Math.round(data.reduce((sum, v) => sum + v.score_risque, 0) / data.length)\n};\n\nconst rapport = {\n  rapport_genere_le: new Date().toISOString(),\n  nombre_villes: data.length,\n  villes: data,\n  statistiques: stats\n};\n\nreturn [{\n  json: rapport,\n  binary: {\n    data: {\n      data: Buffer.from(JSON.stringify(rapport, null, 2)).toString('base64'),\n      mimeType: 'application/json',\n      fileName: 'rapport-meteo.json'\n    }\n  }\n}];"
+      },
+      "id": "9743a168-5157-4db4-a738-8cec3b28b000",
+      "name": "Générer JSON1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        -464
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupérer toutes les données agrégées\nconst allItems = $input.all();\n// Extraire les données - enlever le wrapper \"data\" si présent\nconst data = allItems.map(item => {\n  const json = item.json;\n  // Si les données sont dans un tableau \"data\", extraire le premier élément\n  if (json.data && Array.isArray(json.data) && json.data.length > 0) {\n    return json.data[0];\n  }\n  return json;\n});\n\nconst csv = [\n  \"Ville,Score,Niveau,Temperature,Vent,Precipitation,AQI,Action\",\n  ...data.map(v => \n    `${v.ville},${v.score_risque},${v.niveau_alerte},${v.temperature},${v.vent_kmh},${v.precipitation_mm},${v.qualite_air_aqi},\\\"${v.action_requise}\\\"`\n  )\n].join('\\n');\n\nreturn [{\n  json: { lignes: data.length },\n  binary: {\n    data: {\n      data: Buffer.from(csv, 'utf-8').toString('base64'),\n      mimeType: 'text/csv',\n      fileName: 'alertes-meteo.csv'\n    }\n  }\n}];"
+      },
+      "id": "3b27d606-7e1f-482f-90b5-ad4c8b156887",
+      "name": "Générer CSV1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        -336
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "10f1aef7-24c9-4562-8859-54648308b426",
+      "name": "No Op",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        784,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "e0577028-770b-4e02-a6aa-6071787382d9",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        960,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -208,
+        -128
+      ],
+      "id": "9e663e7e-d58c-4b24-8a55-ad94058f2603",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -208
+      ],
+      "id": "a04331fb-c738-47d5-89f8-ef55aa8a2ed0",
+      "name": "pip1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/2fab26da-4f7c-4a90-920c-7f9fc20b0f96",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ville",
+              "value": "={{ $json.ville }}"
+            },
+            {
+              "name": "niveau d'alerte",
+              "value": "={{ $json.niveau_alerte }} {{ $json.emoji }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        832,
+        160
+      ],
+      "id": "907e8cfc-58ed-4a96-987f-a60e7ba29b2a",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Définir Villes1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Définir Villes1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Météo1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Qualité Air1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Calculer Score1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculer Score1": {
+      "main": [
+        [
+          {
+            "node": "Switch Alerte1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Alerte1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Op",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Op": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "pip1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API Qualité Air1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "API Météo1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "pip1": {
+      "main": [
+        [
+          {
+            "node": "Générer JSON1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Générer CSV1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Générer HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "980ba0be-dabe-4a43-9e71-26230d26937b",
+  "meta": {
+    "instanceId": "ccc6a3b3227d019e827df143ac6a17abd5a9759ede54fb443ece8ca7a4b0abaf"
+  },
+  "id": "Q9hzbq33mdX1WHSS",
+  "tags": []
+}

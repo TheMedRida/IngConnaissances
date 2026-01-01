@@ -1,0 +1,6 @@
+Ville,Score,Niveau,Temperature,Vent,Precipitation,AQI,Action
+Paris,22,VERT,7.8,9.4,0,29,"Opérations normales"
+Berlin,41,JAUNE,2.1,8.2,0.5,44,"Surveillance renforcée"
+Madrid,18,VERT,6.3,12.1,0,22,"Opérations normales"
+Rome,26,JAUNE,4.7,5.2,0,51,"Surveillance renforcée"
+Amsterdam,20,VERT,5.8,10.3,0,31,"Opérations normales"
